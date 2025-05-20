@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../../api_constants.dart';
+import '../services/api_service.dart';
+
 
 class ProjectListScreen extends StatefulWidget {
   final String? token;
@@ -24,6 +27,8 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
   List<dynamic> _projects = [];
   bool _loading = true;
   String? _token;
+
+  static const List<String> _statusOptions = ['Ativo', 'Inativo', 'Concluído', 'Em andamento'];
 
   @override
   void initState() {
@@ -51,23 +56,32 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
     setState(() {
       _loading = true;
     });
-    final response = await http.get(
-      Uri.parse('http://localhost:8000/api/v1/projetos'),
-      headers: {
-        'Authorization': 'Bearer ${_token ?? ''}',
-      },
-    );
-    if (!mounted) return;
-    if (response.statusCode == 200) {
-      setState(() {
-        _projects = json.decode(response.body);
-        _loading = false;
-      });
-    } else {
+    try {
+      final response = await ApiService.getProjects(_token ?? '');
+      if (!mounted) return;
+      if (response.statusCode == 200) {
+        setState(() {
+          _projects = json.decode(response.body);
+          _loading = false;
+        });
+      } else {
+        setState(() {
+          _projects = [];
+          _loading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao buscar projetos: ${response.statusCode}')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
       setState(() {
         _projects = [];
         _loading = false;
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erro de conexão ao buscar projetos.')),
+      );
     }
   }
 
@@ -90,14 +104,16 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
       ),
     );
     if (confirmed != true) return;
-    await http.delete(
-      Uri.parse('http://localhost:8000/api/v1/projetos/$id'),
-      headers: {
-        'Authorization': 'Bearer ${_token ?? ''}',
-      },
-    );
-    if (!mounted) return;
-    _fetchProjects();
+    try {
+      await ApiService.deleteProject(_token ?? '', id);
+      if (!mounted) return;
+      _fetchProjects();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erro de conexão ao deletar projeto.')),
+      );
+    }
   }
 
   Future<void> _addProjectDialog() async {
@@ -106,6 +122,7 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
     String descricao = '';
     String dataInicio = '';
     String status = '';
+    final TextEditingController dataInicioController = TextEditingController();
 
     await showDialog(
       context: context,
@@ -128,12 +145,32 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                     onSaved: (v) => descricao = v ?? '',
                   ),
                   TextFormField(
-                    decoration: const InputDecoration(labelText: 'Data de Início (YYYY-MM-DD)'),
+                    controller: dataInicioController,
+                    decoration: const InputDecoration(labelText: 'Data de Início'),
+                    readOnly: true,
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2100),
+                      );
+                      if (picked != null) {
+                        dataInicioController.text = "${picked.year.toString().padLeft(4, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+                      }
+                    },
                     onSaved: (v) => dataInicio = v ?? '',
                     validator: (v) => v == null || v.isEmpty ? 'Informe a data' : null,
                   ),
-                  TextFormField(
+                  DropdownButtonFormField<String>(
                     decoration: const InputDecoration(labelText: 'Status'),
+                    value: _statusOptions.contains(status) && status.isNotEmpty ? status : null,
+                    items: _statusOptions
+                        .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                        .toList(),
+                    onChanged: (v) {
+                      status = v ?? '';
+                    },
                     onSaved: (v) => status = v ?? '',
                     validator: (v) => v == null || v.isEmpty ? 'Informe o status' : null,
                   ),
@@ -173,16 +210,16 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
   }
 
   Future<void> _createProject(Map<String, dynamic> data) async {
-    await http.post(
-      Uri.parse('http://localhost:8000/api/v1/projetos'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ${_token ?? ''}',
-      },
-      body: json.encode(data),
-    );
-    if (!mounted) return;
-    _fetchProjects();
+    try {
+      await ApiService.createProject(_token ?? '', data);
+      if (!mounted) return;
+      _fetchProjects();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erro de conexão ao criar projeto.')),
+      );
+    }
   }
 
   Future<void> _editProjectDialog(Map<String, dynamic> project) async {
@@ -191,6 +228,7 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
     String descricao = project['descricao'] ?? '';
     String dataInicio = project['data_inicio'] ?? '';
     String status = project['status'] ?? '';
+    final TextEditingController dataInicioController = TextEditingController(text: dataInicio);
 
     await showDialog(
       context: context,
@@ -215,14 +253,35 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                     onSaved: (v) => descricao = v ?? '',
                   ),
                   TextFormField(
-                    initialValue: dataInicio,
-                    decoration: const InputDecoration(labelText: 'Data de Início (YYYY-MM-DD)'),
+                    controller: dataInicioController,
+                    decoration: const InputDecoration(labelText: 'Data de Início'),
+                    readOnly: true,
+                    onTap: () async {
+                      final initialDate = dataInicioController.text.isNotEmpty
+                          ? DateTime.tryParse(dataInicioController.text) ?? DateTime.now()
+                          : DateTime.now();
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: initialDate,
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2100),
+                      );
+                      if (picked != null) {
+                        dataInicioController.text = "${picked.year.toString().padLeft(4, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+                      }
+                    },
                     onSaved: (v) => dataInicio = v ?? '',
                     validator: (v) => v == null || v.isEmpty ? 'Informe a data' : null,
                   ),
-                  TextFormField(
-                    initialValue: status,
+                  DropdownButtonFormField<String>(
                     decoration: const InputDecoration(labelText: 'Status'),
+                    value: _statusOptions.contains(status) && status.isNotEmpty ? status : null,
+                    items: _statusOptions
+                        .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                        .toList(),
+                    onChanged: (v) {
+                      status = v ?? '';
+                    },
                     onSaved: (v) => status = v ?? '',
                     validator: (v) => v == null || v.isEmpty ? 'Informe o status' : null,
                   ),
@@ -262,16 +321,16 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
   }
 
   Future<void> _updateProject(int id, Map<String, dynamic> data) async {
-    await http.put(
-      Uri.parse('http://localhost:8000/api/v1/projetos/$id'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ${_token ?? ''}',
-      },
-      body: json.encode(data),
-    );
-    if (!mounted) return;
-    _fetchProjects();
+    try {
+      await ApiService.updateProject(_token ?? '', id, data);
+      if (!mounted) return;
+      _fetchProjects();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erro de conexão ao atualizar projeto.')),
+      );
+    }
   }
 
   void _navigateTo(String route) {
@@ -288,6 +347,8 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Projetos'),
+        centerTitle: true,
+        elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -333,32 +394,96 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: _projects.length,
-              itemBuilder: (context, index) {
-                final project = _projects[index];
-                return ListTile(
-                  title: Text(project['nome'] ?? 'Sem nome'),
-                  subtitle: Text(project['descricao'] ?? ''),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit),
-                        onPressed: () => _editProjectDialog(project),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete),
-                        onPressed: () => _deleteProject(project['id']),
-                      ),
-                    ],
-                  ),
-                );
-              },
+          : Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
+              child: _projects.isEmpty
+                  ? const Center(child: Text('Nenhum projeto encontrado.'))
+                  : LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isWide = constraints.maxWidth > 700;
+                        return GridView.builder(
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: isWide ? 2 : 1,
+                            childAspectRatio: 2.8,
+                            crossAxisSpacing: 24,
+                            mainAxisSpacing: 24,
+                          ),
+                          itemCount: _projects.length,
+                          itemBuilder: (context, index) {
+                            final project = _projects[index];
+                            return Card(
+                              elevation: 4,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(20.0),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            project['nome'] ?? 'Sem nome',
+                                            style: Theme.of(context).textTheme.titleLarge,
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            project['descricao'] ?? '',
+                                            style: const TextStyle(color: Colors.black54),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Row(
+                                            children: [
+                                              const Icon(Icons.calendar_today, size: 16, color: Colors.blueGrey),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                project['data_inicio'] ?? '',
+                                                style: const TextStyle(fontSize: 13, color: Colors.blueGrey),
+                                              ),
+                                              const SizedBox(width: 16),
+                                              const Icon(Icons.flag, size: 16, color: Colors.blueGrey),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                project['status'] ?? '',
+                                                style: const TextStyle(fontSize: 13, color: Colors.blueGrey),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Column(
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      children: [
+                                        IconButton(
+                                          icon: const Icon(Icons.edit, color: Colors.blue),
+                                          onPressed: () => _editProjectDialog(project),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.delete, color: Colors.red),
+                                          onPressed: () => _deleteProject(project['id']),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
             ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: _addProjectDialog,
-        child: const Icon(Icons.add),
+        icon: const Icon(Icons.add),
+        label: const Text('Adicionar Projeto'),
+        backgroundColor: Colors.blue,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }

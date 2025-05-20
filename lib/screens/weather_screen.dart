@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../../api_constants.dart';
+import '../services/api_service.dart';
 
 class WeatherScreen extends StatefulWidget {
   final String? token;
@@ -45,12 +46,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
       _error = null;
     });
     try {
-      final response = await http.get(
-        Uri.parse('http://localhost:8000/api/v1/weather?city=São Paulo'),
-        headers: {
-          'Authorization': 'Bearer ${_token ?? ''}',
-        },
-      );
+      final response = await ApiService.getWeather(_token ?? '', 'São Paulo');
       if (!mounted) return;
       if (response.statusCode == 200) {
         setState(() {
@@ -84,7 +80,11 @@ class _WeatherScreenState extends State<WeatherScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Clima - São Paulo')),
+      appBar: AppBar(
+        title: const Text('Clima - São Paulo'),
+        centerTitle: true,
+        elevation: 0,
+      ),
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
@@ -117,30 +117,71 @@ class _WeatherScreenState extends State<WeatherScreen> {
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? Center(child: Text(_error!))
-              : _weather == null
-                  ? const Center(child: Text('Nenhum dado de clima.'))
-                  : Padding(
-                      padding: const EdgeInsets.all(24.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Cidade: ${_weather?['city'] ?? 'São Paulo'}',
-                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 16),
-                          Text('Temperatura: ${_weather?['temperature'] ?? '-'}°C'),
-                          Text('Descrição: ${_weather?['description'] ?? '-'}'),
-                          const SizedBox(height: 24),
-                          ElevatedButton(
-                            onPressed: _fetchWeather,
-                            child: const Text('Atualizar'),
-                          ),
-                        ],
-                      ),
-                    ),
+          : Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 400),
+                child: Card(
+                  elevation: 8,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: 32.0),
+                    child: _error != null
+                        ? Center(child: Text(_error!))
+                        : _weather == null
+                            ? const Center(child: Text('Nenhum dado de clima.'))
+                            : Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Cidade: ${_weather?['city'] ?? 'São Paulo'}',
+                                    style: Theme.of(context).textTheme.titleLarge,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(Icons.thermostat, color: Colors.orange),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Temperatura: ${_weather?['temperature'] ?? '-'}°C',
+                                        style: const TextStyle(fontSize: 18),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(Icons.cloud, color: Colors.blue),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Descrição: ${_weather?['description'] ?? '-'}',
+                                        style: const TextStyle(fontSize: 18),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 32),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton.icon(
+                                      onPressed: _fetchWeather,
+                                      icon: const Icon(Icons.refresh),
+                                      label: const Text('Atualizar'),
+                                      style: ElevatedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(vertical: 16),
+                                        textStyle: const TextStyle(fontSize: 16),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                  ),
+                ),
+              ),
+            ),
     );
   }
 }
