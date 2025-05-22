@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'dart:html' as html; // Para acessar geolocalização no navegador
 import '../../core/constants/api_constants.dart';
 import '../../core/services/api_service.dart';
 
@@ -17,14 +18,16 @@ class _WeatherScreenState extends State<WeatherScreen> {
   bool _loading = true;
   String? _error;
   String? _token;
+  double? _lat;
+  double? _lon;
 
   @override
   void initState() {
     super.initState();
-    _initTokenAndFetch();
+    _initTokenAndLocation();
   }
 
-  Future<void> _initTokenAndFetch() async {
+  Future<void> _initTokenAndLocation() async {
     String? token = widget.token;
     if (token == null || token.isEmpty) {
       final prefs = await SharedPreferences.getInstance();
@@ -34,8 +37,36 @@ class _WeatherScreenState extends State<WeatherScreen> {
     setState(() {
       _token = token;
     });
-    if (_token != null && _token!.isNotEmpty) {
-      _fetchWeather();
+    _getLocation();
+  }
+
+  void _getLocation() {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    if (html.window.navigator.geolocation != null) {
+      html.window.navigator.geolocation.getCurrentPosition().then((pos) {
+        if (!mounted) return;
+        setState(() {
+          _lat = pos.coords?.latitude != null ? (pos.coords!.latitude as num).toDouble() : null;
+          _lon = pos.coords?.longitude != null ? (pos.coords!.longitude as num).toDouble() : null;
+        });
+        if (_token != null && _lat != null && _lon != null) {
+          _fetchWeather();
+        }
+      }).catchError((e) {
+        if (!mounted) return;
+        setState(() {
+          _error = 'Não foi possível obter localização.';
+          _loading = false;
+        });
+      });
+    } else {
+      setState(() {
+        _error = 'Geolocalização não suportada.';
+        _loading = false;
+      });
     }
   }
 
@@ -46,11 +77,29 @@ class _WeatherScreenState extends State<WeatherScreen> {
       _error = null;
     });
     try {
-      final response = await ApiService.getWeather(_token ?? '', 'São Paulo');
+      final response = await ApiService.getWeather(
+        _token ?? '',
+        lat: _lat!,
+        lon: _lon!,
+      );
       if (!mounted) return;
       if (response.statusCode == 200) {
+        final data = json.decode(response.body);
         setState(() {
-          _weather = json.decode(response.body);
+          _weather = {
+            'city': data['location']?['name'] ?? '-',
+            'region': data['location']?['region'] ?? '-',
+            'country': data['location']?['country'] ?? '-',
+            'localtime': data['location']?['localtime'] ?? '-',
+            'temperature': data['current']?['temp_c']?.toString() ?? '-',
+            'feelslike': data['current']?['feelslike_c']?.toString() ?? '-',
+            'humidity': data['current']?['humidity']?.toString() ?? '-',
+            'wind_kph': data['current']?['wind_kph']?.toString() ?? '-',
+            'wind_dir': data['current']?['wind_dir'] ?? '-',
+            'pressure_mb': data['current']?['pressure_mb']?.toString() ?? '-',
+            'description': data['current']?['condition']?['text'] ?? '-',
+            'icon': data['current']?['condition']?['icon'],
+          };
           _loading = false;
         });
       } else {
@@ -79,11 +128,17 @@ class _WeatherScreenState extends State<WeatherScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final Color mainGray = Colors.grey.shade800;
+    final Color lightGray = Colors.grey.shade200;
+    final Color borderGray = Colors.grey.shade400;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Clima - São Paulo'),
+        title: Text('Clima - ${_weather?['city'] ?? 'Local'}'),
         centerTitle: true,
         elevation: 0,
+        backgroundColor: lightGray,
+        foregroundColor: mainGray,
       ),
       drawer: Drawer(
         child: ListView(
@@ -115,32 +170,60 @@ class _WeatherScreenState extends State<WeatherScreen> {
           ],
         ),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? Center(child: Text(_error!))
-              : _weather == null
-                  ? const Center(child: Text('Nenhum dado de clima.'))
-                  : Stack(
-                      children: [
-                        SingleChildScrollView(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
-                            child: Column(
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: Card(
+            elevation: 8,
+            color: lightGray,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _error != null
+                      ? Center(child: Text(_error!))
+                      : _weather == null
+                          ? const Center(child: Text('Nenhum dado de clima.'))
+                          : Column(
+                              mainAxisSize: MainAxisSize.min,
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                Icon(
-                                  Icons.cloud_outlined,
-                                  color: Colors.blue[400],
-                                  size: 80,
-                                ),
+                                _weather?['icon'] != null
+                                    ? Image.network(
+                                        'https:${_weather!['icon']}',
+                                        width: 80,
+                                        height: 80,
+                                      )
+                                    : Icon(
+                                        Icons.cloud_outlined,
+                                        color: Colors.blue[400],
+                                        size: 80,
+                                      ),
                                 const SizedBox(height: 16),
                                 Text(
-                                  _weather?['city'] ?? 'São Paulo',
+                                  _weather?['city'] ?? '-',
                                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                                         fontWeight: FontWeight.bold,
+                                        color: mainGray,
                                       ),
                                   textAlign: TextAlign.center,
+                                ),
+                                Text(
+                                  '${_weather?['region'] ?? '-'}, ${_weather?['country'] ?? '-'}',
+                                  style: TextStyle(
+                                    color: mainGray.withOpacity(0.7),
+                                    fontSize: 16,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Local: ${_weather?['localtime'] ?? '-'}',
+                                  style: TextStyle(
+                                    color: borderGray,
+                                    fontSize: 14,
+                                  ),
                                 ),
                                 const SizedBox(height: 24),
                                 Row(
@@ -151,6 +234,18 @@ class _WeatherScreenState extends State<WeatherScreen> {
                                     Text(
                                       '${_weather?['temperature'] ?? '-'}°C',
                                       style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w600),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.device_thermostat, color: Colors.red[400], size: 22),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Sensação: ${_weather?['feelslike'] ?? '-'}°C',
+                                      style: const TextStyle(fontSize: 16),
                                     ),
                                   ],
                                 ),
@@ -166,38 +261,69 @@ class _WeatherScreenState extends State<WeatherScreen> {
                                     ),
                                   ],
                                 ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    Column(
+                                      children: [
+                                        Icon(Icons.water_drop, color: Colors.blue[300], size: 22),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          '${_weather?['humidity'] ?? '-'}%',
+                                          style: const TextStyle(fontWeight: FontWeight.bold),
+                                        ),
+                                        const Text('Umidade', style: TextStyle(fontSize: 12)),
+                                      ],
+                                    ),
+                                    Column(
+                                      children: [
+                                        Icon(Icons.air, color: Colors.green[400], size: 22),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          '${_weather?['wind_kph'] ?? '-'} km/h',
+                                          style: const TextStyle(fontWeight: FontWeight.bold),
+                                        ),
+                                        Text('${_weather?['wind_dir'] ?? '-'}', style: const TextStyle(fontSize: 12)),
+                                      ],
+                                    ),
+                                    Column(
+                                      children: [
+                                        Icon(Icons.speed, color: Colors.grey[600], size: 22),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          '${_weather?['pressure_mb'] ?? '-'} mb',
+                                          style: const TextStyle(fontWeight: FontWeight.bold),
+                                        ),
+                                        const Text('Pressão', style: TextStyle(fontSize: 12)),
+                                      ],
+                                    ),
+                                  ],
+                                ),
                                 const SizedBox(height: 32),
-                                // Espaço extra para o botão não sobrepor conteúdo
-                                const SizedBox(height: 80),
-                              ],
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-                            child: SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                onPressed: _fetchWeather,
-                                icon: const Icon(Icons.refresh),
-                                label: const Text('Atualizar'),
-                                style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(vertical: 18),
-                                  textStyle: const TextStyle(fontSize: 18),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton.icon(
+                                    onPressed: _lat != null && _lon != null ? _fetchWeather : null,
+                                    icon: const Icon(Icons.refresh),
+                                    label: const Text('Atualizar'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: mainGray,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(vertical: 18),
+                                      textStyle: const TextStyle(fontSize: 18),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
+                              ],
                             ),
-                          ),
-                        ),
-                      ],
-                    ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

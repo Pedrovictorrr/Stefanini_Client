@@ -344,11 +344,16 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final Color mainGray = Colors.grey.shade800;
+    final Color lightGray = Colors.grey.shade200;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Projetos'),
         centerTitle: true,
         elevation: 0,
+        backgroundColor: lightGray,
+        foregroundColor: mainGray,
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -392,353 +397,360 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
           ],
         ),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : LayoutBuilder(
-              builder: (context, constraints) {
-                final isWide = constraints.maxWidth > 900;
-                final isMedium = constraints.maxWidth > 600 && constraints.maxWidth <= 900;
-                final isSmall = constraints.maxWidth <= 600;
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1400), // aumentado de 1000 para 1400
+          child: Card(
+            elevation: 8,
+            color: lightGray,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 32.0, horizontal: 24.0),
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isWide = constraints.maxWidth > 900;
+                        final isMedium = constraints.maxWidth > 600 && constraints.maxWidth <= 900;
+                        final isSmall = constraints.maxWidth <= 600;
 
-                // Ajuste de colunas e larguras conforme o tamanho da tela
-                List<DataColumn> columns;
-                if (isSmall) {
-                  columns = [
-                    const DataColumn(
-                      label: SizedBox(
-                        width: 120,
-                        child: Text('Nome', textAlign: TextAlign.left),
-                      ),
-                    ),
-                    const DataColumn(
-                      label: SizedBox(
-                        width: 80,
-                        child: Text('Status', textAlign: TextAlign.center),
-                      ),
-                    ),
-                    const DataColumn(
-                      label: SizedBox(
-                        width: 80,
-                        child: Text('Ações', textAlign: TextAlign.center),
-                      ),
-                    ),
-                  ];
-                } else if (isMedium) {
-                  columns = [
-                    const DataColumn(
-                      label: SizedBox(
-                        width: 140,
-                        child: Text('Nome', textAlign: TextAlign.left),
-                      ),
-                    ),
-                    const DataColumn(
-                      label: SizedBox(
-                        width: 120,
-                        child: Text('Data', textAlign: TextAlign.center),
-                      ),
-                    ),
-                    const DataColumn(
-                      label: SizedBox(
-                        width: 100,
-                        child: Text('Status', textAlign: TextAlign.center),
-                      ),
-                    ),
-                    const DataColumn(
-                      label: SizedBox(
-                        width: 100,
-                        child: Text('Ações', textAlign: TextAlign.center),
-                      ),
-                    ),
-                  ];
-                } else {
-                  columns = const [
-                    DataColumn(
-                      label: SizedBox(
-                        width: 160,
-                        child: Text('Nome', textAlign: TextAlign.left),
-                      ),
-                    ),
-                    DataColumn(
-                      label: SizedBox(
-                        width: 220,
-                        child: Text('Descrição', textAlign: TextAlign.left),
-                      ),
-                    ),
-                    DataColumn(
-                      label: SizedBox(
-                        width: 120,
-                        child: Text('Data de Início', textAlign: TextAlign.center),
-                      ),
-                    ),
-                    DataColumn(
-                      label: SizedBox(
-                        width: 120,
-                        child: Text('Status', textAlign: TextAlign.center),
-                      ),
-                    ),
-                    DataColumn(
-                      label: SizedBox(
-                        width: 120,
-                        child: Text('Ações', textAlign: TextAlign.center),
-                      ),
-                    ),
-                  ];
-                }
+                        // Ajuste de colunas e larguras conforme o tamanho da tela
+                        List<DataColumn> columns;
+                        if (isSmall) {
+                          columns = [
+                            const DataColumn(
+                              label: SizedBox(
+                                width: 120,
+                                child: Text('Nome', textAlign: TextAlign.left),
+                              ),
+                            ),
+                            const DataColumn(
+                              label: SizedBox(
+                                width: 80,
+                                child: Text('Status', textAlign: TextAlign.center),
+                              ),
+                            ),
+                            const DataColumn(
+                              label: SizedBox(
+                                width: 80,
+                                child: Text('Ações', textAlign: TextAlign.center),
+                              ),
+                            ),
+                          ];
+                        } else if (isMedium) {
+                          columns = [
+                            const DataColumn(
+                              label: SizedBox(
+                                width: 140,
+                                child: Text('Nome', textAlign: TextAlign.left),
+                              ),
+                            ),
+                            const DataColumn(
+                              label: SizedBox(
+                                width: 120,
+                                child: Text('Data', textAlign: TextAlign.center),
+                              ),
+                            ),
+                            const DataColumn(
+                              label: SizedBox(
+                                width: 100,
+                                child: Text('Status', textAlign: TextAlign.center),
+                              ),
+                            ),
+                            const DataColumn(
+                              label: SizedBox(
+                                width: 100,
+                                child: Text('Ações', textAlign: TextAlign.center),
+                              ),
+                            ),
+                          ];
+                        } else {
+                          columns = const [
+                            DataColumn(
+                              label: SizedBox(
+                                width: 160,
+                                child: Text('Nome', textAlign: TextAlign.left),
+                              ),
+                            ),
+                            DataColumn(
+                              label: SizedBox(
+                                width: 220,
+                                child: Text('Descrição', textAlign: TextAlign.left),
+                              ),
+                            ),
+                            DataColumn(
+                              label: SizedBox(
+                                width: 120,
+                                child: Text('Data de Início', textAlign: TextAlign.center),
+                              ),
+                            ),
+                            DataColumn(
+                              label: SizedBox(
+                                width: 120,
+                                child: Text('Status', textAlign: TextAlign.center),
+                              ),
+                            ),
+                            DataColumn(
+                              label: SizedBox(
+                                width: 120,
+                                child: Text('Ações', textAlign: TextAlign.center),
+                              ),
+                            ),
+                          ];
+                        }
 
-                // Ajuste do padding horizontal
-                final double maxTableWidth = isWide
-                    ? 1200
-                    : isMedium
-                        ? 800
-                        : constraints.maxWidth - 16;
-                final double horizontalPadding = ((constraints.maxWidth - maxTableWidth) / 2).clamp(8.0, double.infinity);
+                        // Ajuste do padding horizontal
+                        final double maxTableWidth = isWide
+                            ? 1400 // aumentado de 1200 para 1400
+                            : isMedium
+                                ? 900 // aumentado de 800 para 900
+                                : constraints.maxWidth - 16;
+                        final double horizontalPadding = ((constraints.maxWidth - maxTableWidth) / 2).clamp(8.0, double.infinity);
 
-                return Padding(
-                  padding: EdgeInsets.symmetric(
-                    vertical: 16.0,
-                    horizontal: horizontalPadding,
-                  ),
-                  child: _projects.isEmpty
-                      ? const Center(child: Text('Nenhum projeto encontrado.'))
-                      : SingleChildScrollView(
-                          scrollDirection: Axis.vertical,
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                ConstrainedBox(
-                                  constraints: BoxConstraints(
-                                    minWidth: isWide
-                                        ? 1200
-                                        : isMedium
-                                            ? 800
-                                            : constraints.maxWidth - 16,
-                                    maxWidth: maxTableWidth,
-                                  ),
-                                  child: Theme(
-                                    data: Theme.of(context).copyWith(
-                                      cardColor: Colors.white,
-                                      dividerColor: Colors.grey.shade300,
-                                      dataTableTheme: DataTableThemeData(
-                                        headingRowColor: MaterialStateProperty.all(Colors.blue.shade50),
-                                        headingTextStyle: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.blue,
-                                          fontSize: 16,
+                        return _projects.isEmpty
+                            ? const Center(child: Text('Nenhum projeto encontrado.'))
+                            : SingleChildScrollView(
+                                scrollDirection: Axis.vertical,
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      ConstrainedBox(
+                                        constraints: BoxConstraints(
+                                          minWidth: isWide
+                                              ? 1400 // aumentado de 1200 para 1400
+                                              : isMedium
+                                                  ? 900 // aumentado de 800 para 900
+                                                  : constraints.maxWidth - 16,
+                                          maxWidth: maxTableWidth,
                                         ),
-                                        dataRowColor: MaterialStateProperty.resolveWith<Color?>(
-                                          (Set<MaterialState> states) {
-                                            if (states.contains(MaterialState.selected)) {
-                                              return Colors.blue.shade100;
-                                            }
-                                            return null;
-                                          },
-                                        ),
-                                        dataTextStyle: const TextStyle(fontSize: 15),
-                                        horizontalMargin: isSmall ? 8 : 16,
-                                        columnSpacing: isSmall ? 12 : 32,
-                                      ),
-                                    ),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: DataTable(
-                                        showBottomBorder: true,
-                                        dataRowMinHeight: isSmall ? 40 : 48,
-                                        dataRowMaxHeight: isSmall ? 48 : 60,
-                                        columns: columns,
-                                        rows: List<DataRow>.generate(
-                                          _projects.length,
-                                          (index) {
-                                            final project = _projects[index];
-                                            final isEven = index % 2 == 0;
-                                            // Linhas adaptadas conforme o tamanho da tela
-                                            List<DataCell> cells;
-                                            if (isSmall) {
-                                              cells = [
-                                                DataCell(
-                                                  Text(
-                                                    project['nome'] ?? 'Sem nome',
-                                                    style: const TextStyle(fontWeight: FontWeight.w500),
-                                                    overflow: TextOverflow.ellipsis,
-                                                  ),
-                                                ),
-                                                DataCell(
-                                                  Center(
-                                                    child: Container(
-                                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                                      decoration: BoxDecoration(
-                                                        color: _getStatusColor(project['status']),
-                                                        borderRadius: BorderRadius.circular(8),
-                                                      ),
-                                                      child: Text(
-                                                        project['status'] ?? '',
-                                                        style: const TextStyle(
-                                                          color: Colors.white,
-                                                          fontWeight: FontWeight.bold,
-                                                          fontSize: 12,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                                DataCell(
-                                                  Row(
-                                                    mainAxisAlignment: MainAxisAlignment.center,
-                                                    children: [
-                                                      IconButton(
-                                                        icon: const Icon(Icons.edit, color: Colors.blue, size: 18),
-                                                        tooltip: 'Editar',
-                                                        onPressed: () => _editProjectDialog(project),
-                                                      ),
-                                                      IconButton(
-                                                        icon: const Icon(Icons.delete, color: Colors.red, size: 18),
-                                                        tooltip: 'Deletar',
-                                                        onPressed: () => _deleteProject(project['id']),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ];
-                                            } else if (isMedium) {
-                                              cells = [
-                                                DataCell(
-                                                  Text(
-                                                    project['nome'] ?? 'Sem nome',
-                                                    style: const TextStyle(fontWeight: FontWeight.w500),
-                                                    overflow: TextOverflow.ellipsis,
-                                                  ),
-                                                ),
-                                                DataCell(
-                                                  Center(
-                                                    child: Text(
-                                                      project['data_inicio'] ?? '',
-                                                      style: const TextStyle(fontSize: 13),
-                                                    ),
-                                                  ),
-                                                ),
-                                                DataCell(
-                                                  Center(
-                                                    child: Container(
-                                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                                      decoration: BoxDecoration(
-                                                        color: _getStatusColor(project['status']),
-                                                        borderRadius: BorderRadius.circular(8),
-                                                      ),
-                                                      child: Text(
-                                                        project['status'] ?? '',
-                                                        style: const TextStyle(
-                                                          color: Colors.white,
-                                                          fontWeight: FontWeight.bold,
-                                                          fontSize: 12,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                                DataCell(
-                                                  Row(
-                                                    mainAxisAlignment: MainAxisAlignment.center,
-                                                    children: [
-                                                      IconButton(
-                                                        icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
-                                                        tooltip: 'Editar',
-                                                        onPressed: () => _editProjectDialog(project),
-                                                      ),
-                                                      IconButton(
-                                                        icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-                                                        tooltip: 'Deletar',
-                                                        onPressed: () => _deleteProject(project['id']),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ];
-                                            } else {
-                                              cells = [
-                                                DataCell(
-                                                  Text(
-                                                    project['nome'] ?? 'Sem nome',
-                                                    style: const TextStyle(fontWeight: FontWeight.w500),
-                                                  ),
-                                                ),
-                                                DataCell(
-                                                  Text(
-                                                    project['descricao'] ?? '',
-                                                    maxLines: 2,
-                                                    overflow: TextOverflow.ellipsis,
-                                                  ),
-                                                ),
-                                                DataCell(
-                                                  Center(
-                                                    child: Text(
-                                                      project['data_inicio'] ?? '',
-                                                      style: const TextStyle(fontSize: 14),
-                                                    ),
-                                                  ),
-                                                ),
-                                                DataCell(
-                                                  Center(
-                                                    child: Container(
-                                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                                      decoration: BoxDecoration(
-                                                        color: _getStatusColor(project['status']),
-                                                        borderRadius: BorderRadius.circular(8),
-                                                      ),
-                                                      child: Text(
-                                                        project['status'] ?? '',
-                                                        style: const TextStyle(
-                                                          color: Colors.white,
-                                                          fontWeight: FontWeight.bold,
-                                                          fontSize: 13,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                                DataCell(
-                                                  Row(
-                                                    mainAxisAlignment: MainAxisAlignment.center,
-                                                    children: [
-                                                      IconButton(
-                                                        icon: const Icon(Icons.edit, color: Colors.blue),
-                                                        tooltip: 'Editar',
-                                                        onPressed: () => _editProjectDialog(project),
-                                                      ),
-                                                      IconButton(
-                                                        icon: const Icon(Icons.delete, color: Colors.red),
-                                                        tooltip: 'Deletar',
-                                                        onPressed: () => _deleteProject(project['id']),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ];
-                                            }
-                                            return DataRow(
-                                              color: MaterialStateProperty.all(
-                                                isEven ? Colors.grey.shade50 : Colors.white,
+                                        child: Theme(
+                                          data: Theme.of(context).copyWith(
+                                            cardColor: Colors.white,
+                                            dividerColor: Colors.grey.shade300,
+                                            dataTableTheme: DataTableThemeData(
+                                              headingRowColor: MaterialStateProperty.all(Colors.blue.shade50),
+                                              headingTextStyle: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.blue,
+                                                fontSize: 16,
                                               ),
-                                              cells: cells,
-                                            );
-                                          },
+                                              dataRowColor: MaterialStateProperty.resolveWith<Color?>(
+                                                (Set<MaterialState> states) {
+                                                  if (states.contains(MaterialState.selected)) {
+                                                    return Colors.blue.shade100;
+                                                  }
+                                                  return null;
+                                                },
+                                              ),
+                                              dataTextStyle: const TextStyle(fontSize: 15),
+                                              horizontalMargin: isSmall ? 8 : 16,
+                                              columnSpacing: isSmall ? 12 : 32,
+                                            ),
+                                          ),
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.circular(12),
+                                            child: DataTable(
+                                              showBottomBorder: true,
+                                              dataRowMinHeight: isSmall ? 40 : 48,
+                                              dataRowMaxHeight: isSmall ? 48 : 60,
+                                              columns: columns,
+                                              rows: List<DataRow>.generate(
+                                                _projects.length,
+                                                (index) {
+                                                  final project = _projects[index];
+                                                  final isEven = index % 2 == 0;
+                                                  // Linhas adaptadas conforme o tamanho da tela
+                                                  List<DataCell> cells;
+                                                  if (isSmall) {
+                                                    cells = [
+                                                      DataCell(
+                                                        Text(
+                                                          project['nome'] ?? 'Sem nome',
+                                                          style: const TextStyle(fontWeight: FontWeight.w500),
+                                                          overflow: TextOverflow.ellipsis,
+                                                        ),
+                                                      ),
+                                                      DataCell(
+                                                        Center(
+                                                          child: Container(
+                                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                            decoration: BoxDecoration(
+                                                              color: _getStatusColor(project['status']),
+                                                              borderRadius: BorderRadius.circular(8),
+                                                            ),
+                                                            child: Text(
+                                                              project['status'] ?? '',
+                                                              style: const TextStyle(
+                                                                color: Colors.white,
+                                                                fontWeight: FontWeight.bold,
+                                                                fontSize: 12,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      DataCell(
+                                                        Row(
+                                                          mainAxisAlignment: MainAxisAlignment.center,
+                                                          children: [
+                                                            IconButton(
+                                                              icon: const Icon(Icons.edit, color: Colors.blue, size: 18),
+                                                              tooltip: 'Editar',
+                                                              onPressed: () => _editProjectDialog(project),
+                                                            ),
+                                                            IconButton(
+                                                              icon: const Icon(Icons.delete, color: Colors.red, size: 18),
+                                                              tooltip: 'Deletar',
+                                                              onPressed: () => _deleteProject(project['id']),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ];
+                                                  } else if (isMedium) {
+                                                    cells = [
+                                                      DataCell(
+                                                        Text(
+                                                          project['nome'] ?? 'Sem nome',
+                                                          style: const TextStyle(fontWeight: FontWeight.w500),
+                                                          overflow: TextOverflow.ellipsis,
+                                                        ),
+                                                      ),
+                                                      DataCell(
+                                                        Center(
+                                                          child: Text(
+                                                            project['data_inicio'] ?? '',
+                                                            style: const TextStyle(fontSize: 13),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      DataCell(
+                                                        Center(
+                                                          child: Container(
+                                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                            decoration: BoxDecoration(
+                                                              color: _getStatusColor(project['status']),
+                                                              borderRadius: BorderRadius.circular(8),
+                                                            ),
+                                                            child: Text(
+                                                              project['status'] ?? '',
+                                                              style: const TextStyle(
+                                                                color: Colors.white,
+                                                                fontWeight: FontWeight.bold,
+                                                                fontSize: 12,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      DataCell(
+                                                        Row(
+                                                          mainAxisAlignment: MainAxisAlignment.center,
+                                                          children: [
+                                                            IconButton(
+                                                              icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
+                                                              tooltip: 'Editar',
+                                                              onPressed: () => _editProjectDialog(project),
+                                                            ),
+                                                            IconButton(
+                                                              icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+                                                              tooltip: 'Deletar',
+                                                              onPressed: () => _deleteProject(project['id']),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ];
+                                                  } else {
+                                                    cells = [
+                                                      DataCell(
+                                                        Text(
+                                                          project['nome'] ?? 'Sem nome',
+                                                          style: const TextStyle(fontWeight: FontWeight.w500),
+                                                        ),
+                                                      ),
+                                                      DataCell(
+                                                        Text(
+                                                          project['descricao'] ?? '',
+                                                          maxLines: 2,
+                                                          overflow: TextOverflow.ellipsis,
+                                                        ),
+                                                      ),
+                                                      DataCell(
+                                                        Center(
+                                                          child: Text(
+                                                            project['data_inicio'] ?? '',
+                                                            style: const TextStyle(fontSize: 14),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      DataCell(
+                                                        Center(
+                                                          child: Container(
+                                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                            decoration: BoxDecoration(
+                                                              color: _getStatusColor(project['status']),
+                                                              borderRadius: BorderRadius.circular(8),
+                                                            ),
+                                                            child: Text(
+                                                              project['status'] ?? '',
+                                                              style: const TextStyle(
+                                                                color: Colors.white,
+                                                                fontWeight: FontWeight.bold,
+                                                                fontSize: 13,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      DataCell(
+                                                        Row(
+                                                          mainAxisAlignment: MainAxisAlignment.center,
+                                                          children: [
+                                                            IconButton(
+                                                              icon: const Icon(Icons.edit, color: Colors.blue),
+                                                              tooltip: 'Editar',
+                                                              onPressed: () => _editProjectDialog(project),
+                                                            ),
+                                                            IconButton(
+                                                              icon: const Icon(Icons.delete, color: Colors.red),
+                                                              tooltip: 'Deletar',
+                                                              onPressed: () => _deleteProject(project['id']),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ];
+                                                  }
+                                                  return DataRow(
+                                                    color: MaterialStateProperty.all(
+                                                      isEven ? Colors.grey.shade50 : Colors.white,
+                                                    ),
+                                                    cells: cells,
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                          ),
                                         ),
                                       ),
-                                    ),
+                                    ],
                                   ),
                                 ),
-                              ],
-                            ),
-                          ),
-                        ),
-                );
-              },
+                              );
+                      },
+                    ),
             ),
+          ),
+        ),
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _addProjectDialog,
         icon: const Icon(Icons.add),
         label: const Text('Adicionar Projeto'),
-        backgroundColor: Colors.blue,
+        backgroundColor: Colors.blue, // cor melhorada para azul destacado
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );

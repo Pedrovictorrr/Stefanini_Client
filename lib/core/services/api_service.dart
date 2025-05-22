@@ -65,9 +65,18 @@ class ApiService {
   }
 
   // Get Weather
-  static Future<http.Response> getWeather(String token, String city) {
+  static Future<http.Response> getWeather(
+    String token, {
+    required double lat,
+    required double lon,
+  }) {
+    final queryParams = <String, String>{
+      'lat': lat.toString(),
+      'lon': lon.toString(),
+    };
+    final uri = Uri.parse('$apiBaseUrl/weather').replace(queryParameters: queryParams);
     return http.get(
-      Uri.parse('$apiBaseUrl/weather?city=$city'),
+      uri,
       headers: {'Authorization': 'Bearer $token'},
     );
   }
