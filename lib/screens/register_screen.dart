@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
-import '../../api_constants.dart';
-import '../services/api_service.dart';
+import '../../core/constants/api_constants.dart';
+import '../../core/services/api_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart'; // novo import
-import '../../api_constants.dart';
-import '../services/api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/constants/api_constants.dart';
+import '../../core/services/api_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -97,17 +97,25 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final Color mainGray = Colors.grey.shade800;
+    final Color lightGray = Colors.grey.shade200;
+    final Color borderGray = Colors.grey.shade400;
+    final Color textGray = Colors.grey.shade900;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Login'),
         centerTitle: true,
         elevation: 0,
+        backgroundColor: lightGray,
+        foregroundColor: mainGray,
       ),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 400),
           child: Card(
             elevation: 8,
+            color: lightGray,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: 32.0),
@@ -116,9 +124,25 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // LOGO
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16.0),
+                      child: SizedBox(
+                        height: 72,
+                        child: Image.asset(
+                          'logo.png',
+                          height: 72,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) => const Icon(Icons.error, size: 48, color: Colors.red),
+                        ),
+                      ),
+                    ),
                     Text(
                       'Bem-vindo!',
-                      style: Theme.of(context).textTheme.headlineSmall,
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            color: mainGray,
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                     const SizedBox(height: 24),
                     if (_error != null)
@@ -131,10 +155,16 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     TextFormField(
                       controller: _emailController,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Email',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.email),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: borderGray),
+                        ),
+                        prefixIcon: Icon(Icons.email, color: mainGray),
+                        filled: true,
+                        fillColor: Colors.white,
+                        labelStyle: TextStyle(color: mainGray),
                       ),
                       keyboardType: TextInputType.emailAddress,
                       validator: (value) =>
@@ -143,10 +173,16 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 20),
                     TextFormField(
                       controller: _passwordController,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Password',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.lock),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: borderGray),
+                        ),
+                        prefixIcon: Icon(Icons.lock, color: mainGray),
+                        filled: true,
+                        fillColor: Colors.white,
+                        labelStyle: TextStyle(color: mainGray),
                       ),
                       obscureText: true,
                       validator: (value) =>
@@ -160,11 +196,14 @@ class _LoginScreenState extends State<LoginScreen> {
                           : ElevatedButton(
                               onPressed: _login,
                               style: ElevatedButton.styleFrom(
+                                backgroundColor: mainGray,
+                                foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(vertical: 16),
-                                textStyle: const TextStyle(fontSize: 16),
+                                textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
+                                elevation: 2,
                               ),
                               child: const Text('Login'),
                             ),
@@ -177,13 +216,19 @@ class _LoginScreenState extends State<LoginScreen> {
                           Navigator.pushNamed(context, '/register');
                         },
                         style: OutlinedButton.styleFrom(
+                          foregroundColor: mainGray,
+                          side: BorderSide(color: borderGray, width: 2),
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          textStyle: const TextStyle(fontSize: 16),
+                          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
+                          backgroundColor: Colors.white,
                         ),
-                        child: const Text('Registrar-se'),
+                        child: Text(
+                          'Registrar-se',
+                          style: TextStyle(color: mainGray),
+                        ),
                       ),
                     ),
                   ],

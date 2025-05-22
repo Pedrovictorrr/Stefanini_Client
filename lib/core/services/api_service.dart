@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../api_constants.dart';
+import '../constants/api_constants.dart';
 
 class ApiService {
   // Login
@@ -30,8 +30,9 @@ class ApiService {
   }
 
   // Create Project
-  static Future<http.Response> createProject(String token, Map<String, dynamic> data) {
-    return http.post(
+  static Future<http.Response> createProject(String token, Map<String, dynamic> data) async {
+   
+    final response = await http.post(
       Uri.parse('$apiBaseUrl/projetos'),
       headers: {
         'Content-Type': 'application/json',
@@ -39,6 +40,8 @@ class ApiService {
       },
       body: jsonEncode(data),
     );
+ 
+    return response;
   }
 
   // Update Project
@@ -69,3 +72,5 @@ class ApiService {
     );
   }
 }
+
+// Nenhuma alteração necessária. O token está sendo utilizado corretamente nas chamadas de API.
